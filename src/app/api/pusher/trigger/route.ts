@@ -13,11 +13,9 @@ const pusher = new Pusher({
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    // body: { event, payload }
     const eventName = body.event || "signal";
     const payload = body.payload || {};
 
-    // We always trigger on the same channel; clients filter by payload.to
     await pusher.trigger("presence-walkie", "signal", payload);
     return NextResponse.json({ ok: true });
   } catch (err) {

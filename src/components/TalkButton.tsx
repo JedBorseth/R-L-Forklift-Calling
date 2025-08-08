@@ -1,5 +1,7 @@
 "use client";
 import React from "react";
+import { Button } from "./ui/button";
+import { Mic } from "lucide-react";
 
 export default function TalkButton({
   onStart,
@@ -11,7 +13,7 @@ export default function TalkButton({
   disabled?: boolean;
 }) {
   return (
-    <button
+    <Button
       onMouseDown={(e) => {
         if (!disabled) onStart();
       }}
@@ -29,9 +31,9 @@ export default function TalkButton({
         if (!disabled) onEnd();
       }}
       disabled={disabled}
-      className="rounded-full w-40 h-40 flex items-center justify-center text-lg font-semibold shadow-md bg-blue-600 text-white active:scale-95"
+      className="rounded-full select-none w-32 h-32 active:bg-red-500 active:scale-95 transition-transform duration-100 ease-in-out active:outline-none active:ring-2 active:ring-offset-2 active:ring-gray-500"
     >
-      Hold to Talk
-    </button>
+      <Mic className="text-2xl" />
+    </Button>
   );
 }
