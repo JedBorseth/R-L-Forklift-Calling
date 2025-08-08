@@ -1,4 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 import Pusher from "pusher-js";
 import { v4 as uuidv4 } from "uuid";
@@ -48,8 +51,29 @@ export default function useWalkie() {
     pusherRef.current = pusher;
 
     const channel = pusher.subscribe("presence-walkie");
+    type PusherDataType = {
+      members: {
+        [id: string]: {
+          name: string;
+        };
+      };
+      count: number;
+      myID: string;
+      me: {
+        id: string;
+        info: {
+          name: string;
+        };
+      };
+    };
+    type PusherMemberType = {
+      id: string;
+      info: {
+        name: string;
+      };
+    };
 
-    channel.bind("pusher:subscription_succeeded", (data: any) => {
+    channel.bind("pusher:subscription_succeeded", (data: PusherDataType) => {
       const membersObj = data.members;
 
       const memberList = Object.entries(membersObj).map(
@@ -74,81 +98,91 @@ export default function useWalkie() {
       });
     });
 
-    channel.bind("pusher:member_added", (member: any) => {
+    channel.bind("pusher:member_added", (member: PusherMemberType) => {
       setParticipants((prev) => [
         ...prev,
         { id: member.id, name: member.info?.name || "Guest" },
       ]);
     });
 
-    channel.bind("pusher:member_removed", (member: any) => {
+    channel.bind("pusher:member_removed", (member: PusherMemberType) => {
+      console.log("Member removed:", member);
       setParticipants((prev) => prev.filter((p) => p.id !== member.id));
     });
 
-    channel.bind("signal", async (data: any) => {
-      if (!data || (data.to !== clientId.current && data.to !== "*")) return;
-      const { from, type, payload } = data;
+    channel.bind(
+      "signal",
+      async (data: { from: string; to: string; type: string }) => {
+        console.log("Received signal:", data);
+        if (!data || (data.to !== clientId.current && data.to !== "*")) return;
+        const { from, type, payload } = data as {
+          from: string;
+          to: string;
+          type: string;
+          payload: any;
+        };
 
-      if (type === "offer") {
-        let pc = pcMap.current[from];
-        if (!pc) pc = createPeer(from);
-        await pc.setRemoteDescription(new RTCSessionDescription(payload));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        await triggerServerEvent("signal", {
-          from: clientId.current,
-          to: from,
-          type: "answer",
-          payload: pc.localDescription,
-        });
-      }
-
-      if (type === "answer") {
-        const pc = pcMap.current[from];
-        if (pc)
+        if (type === "offer") {
+          let pc = pcMap.current[from];
+          if (!pc) pc = createPeer(from);
           await pc.setRemoteDescription(new RTCSessionDescription(payload));
-      }
-
-      if (type === "candidate") {
-        const pc = pcMap.current[from];
-        if (pc) await pc.addIceCandidate(new RTCIceCandidate(payload));
-      }
-
-      if (type === "join") {
-        const remoteId = payload.id;
-        if (remoteId === clientId.current) return;
-
-        if (!participants.find((p) => p.id === remoteId)) {
-          setParticipants((prev) => [
-            ...prev,
-            { id: remoteId, name: payload.name || "Guest" },
-          ]);
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await triggerServerEvent("signal", {
+            from: clientId.current,
+            to: from,
+            type: "answer",
+            payload: pc.localDescription,
+          });
         }
 
-        let pc = pcMap.current[remoteId];
-        if (!pc) {
-          pc = createPeer(remoteId);
+        if (type === "answer") {
+          const pc = pcMap.current[from];
+          if (pc)
+            await pc.setRemoteDescription(new RTCSessionDescription(payload));
         }
-        // createOffer and rest as before
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        await triggerServerEvent("signal", {
-          from: clientId.current,
-          to: remoteId,
-          type: "offer",
-          payload: pc.localDescription,
-        });
-      }
 
-      if (type === "leave") {
-        const leavingId = payload.id;
-        if (pcMap.current[leavingId]) {
-          pcMap.current[leavingId].close();
-          delete pcMap.current[leavingId];
+        if (type === "candidate") {
+          const pc = pcMap.current[from];
+          if (pc) await pc.addIceCandidate(new RTCIceCandidate(payload));
         }
-        setParticipants((prev) => prev.filter((p) => p.id !== leavingId));
+
+        if (type === "join") {
+          const remoteId = payload.id;
+          if (remoteId === clientId.current) return;
+
+          if (!participants.find((p) => p.id === remoteId)) {
+            setParticipants((prev) => [
+              ...prev,
+              { id: remoteId, name: payload.name || "Guest" },
+            ]);
+          }
+
+          let pc = pcMap.current[remoteId];
+          if (!pc) {
+            pc = createPeer(remoteId);
+          }
+          // createOffer and rest as before
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          await triggerServerEvent("signal", {
+            from: clientId.current,
+            to: remoteId,
+            type: "offer",
+            payload: pc.localDescription,
+          });
+        }
+
+        if (type === "leave") {
+          const leavingId = payload.id;
+          if (pcMap.current[leavingId]) {
+            pcMap.current[leavingId].close();
+            delete pcMap.current[leavingId];
+          }
+          setParticipants((prev) => prev.filter((p) => p.id !== leavingId));
+        }
       }
-    });
+    );
   }
   function createPeer(remoteId: string) {
     if (pcMap.current[remoteId]) {
