@@ -1,12 +1,15 @@
 import React from "react";
 
 const Map = ({ currentMachine }: { currentMachine: string }) => {
+  const machineAsTitle = currentMachine
+    ? currentMachine.charAt(0).toUpperCase() + currentMachine.slice(1)
+    : "No Machine Selected";
   return (
     <div className="">
       <h1 className="text-2xl font-bold w-full text-center">
         You Are:{" "}
         <span className="underline">
-          {currentMachine || "No Machine Selected"}
+          {machineAsTitle || "No Machine Selected"}
         </span>
       </h1>
       <div className="border-2 aspect-square flex">

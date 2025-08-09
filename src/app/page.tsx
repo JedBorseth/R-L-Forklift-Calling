@@ -1,18 +1,10 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import TalkButton from "~/components/TalkButton";
 import useWalkie from "~/hooks/useWalkie";
 import Map from "~/components/Map";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
@@ -28,6 +20,8 @@ import {
 import { Menu } from "lucide-react";
 
 export default function Page() {
+  const [machine, setMachine] = useState<string>("");
+
   const {
     connected,
     connect,
@@ -36,6 +30,25 @@ export default function Page() {
     participants,
     localMuted,
   } = useWalkie();
+
+  const saveToLocalStorage = (key: string, value: string) => {
+    localStorage.setItem(key, value);
+  };
+
+  const getFromLocalStorage = (key: string): string | null => {
+    return localStorage.getItem(key);
+  };
+  useEffect(() => {
+    const value = getFromLocalStorage("machine");
+    if (value !== null) {
+      setMachine(value);
+    }
+  }, []);
+
+  const handleSave = (key: string, value: string) => {
+    saveToLocalStorage(key, value);
+    setMachine(value);
+  };
 
   return (
     <main className="min-h-screen flex justify-center">
@@ -50,14 +63,14 @@ export default function Page() {
               Push to Talk Demo
             </h1>
 
+            <div className="grid w-full max-w-sm items-center gap-3">
+              <Label htmlFor="request">Request Material</Label>
+              <Input type="request" id="request" placeholder="10x20 32C etc." />
+            </div>
             <div className="flex gap-2 justify-center">
               <Button onClick={connect} disabled={connected}>
                 {connected ? "Connected" : "Connect Mic"}
               </Button>
-            </div>
-            <div className="grid w-full max-w-sm items-center gap-3">
-              <Label htmlFor="request">Request Material</Label>
-              <Input type="request" id="request" placeholder="10x20 32C etc." />
             </div>
             <div className="flex justify-center">
               <TalkButton
@@ -83,7 +96,7 @@ export default function Page() {
           </div>
         </TabsContent>
         <TabsContent value="map">
-          <Map currentMachine="Guillotine" />
+          <Map currentMachine={machine} />
         </TabsContent>
       </Tabs>
 
@@ -100,27 +113,86 @@ export default function Page() {
               Change your machine that you will be requesting material to
             </DrawerDescription>
           </DrawerHeader>
-          <ul className="grid grid-cols-2 gap-2 p-5 place-items-center">
+          <ul className="grid grid-cols-3 gap-2 p-5 place-items-center">
             <li>
-              <Button variant="outline">Rotary</Button>
+              <Button
+                variant={machine === "rotary" ? "default" : "outline"}
+                onClick={() => {
+                  handleSave("machine", "rotary");
+                }}
+              >
+                Rotary
+              </Button>
             </li>
             <li>
-              <Button variant="outline">Slitter</Button>
+              <Button
+                variant={machine === "slitter" ? "default" : "outline"}
+                onClick={() => {
+                  handleSave("machine", "slitter");
+                }}
+              >
+                Slitter
+              </Button>
             </li>
             <li>
-              <Button variant="outline">AOPACK</Button>
+              <Button
+                variant={machine === "aopack" ? "default" : "outline"}
+                onClick={() => {
+                  handleSave("machine", "aopack");
+                }}
+              >
+                AOPACK
+              </Button>
             </li>
             <li>
-              <Button variant="outline">Hand Fed Die Cut</Button>
+              <Button
+                variant={machine === "diecut" ? "default" : "outline"}
+                onClick={() => {
+                  handleSave("machine", "diecut");
+                }}
+              >
+                Hand Fed Die Cut
+              </Button>
             </li>
             <li>
-              <Button variant="outline">Guillotine</Button>
+              <Button
+                variant={machine === "guillotine" ? "default" : "outline"}
+                onClick={() => {
+                  handleSave("machine", "guillotine");
+                }}
+              >
+                Guillotine
+              </Button>
             </li>
             <li>
-              <Button variant="outline">Langston</Button>
+              <Button
+                variant={machine === "langston" ? "default" : "outline"}
+                onClick={() => {
+                  handleSave("machine", "langston");
+                }}
+              >
+                Langston
+              </Button>
             </li>
             <li>
-              <Button variant="outline">Assembly</Button>
+              <Button
+                variant={machine === "assembly" ? "default" : "outline"}
+                onClick={() => {
+                  handleSave("machine", "assembly");
+                }}
+              >
+                Assembly
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant={machine === "gluing" ? "default" : "outline"}
+                onClick={() => {
+                  handleSave("machine", "gluing");
+                }}
+              >
+                Gluing
+              </Button>
             </li>
           </ul>
           <div className="flex items-center justify-center gap-3 flex-col">
