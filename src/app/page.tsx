@@ -15,6 +15,17 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "~/components/ui/drawer";
+import { Menu } from "lucide-react";
 
 export default function Page() {
   const {
@@ -29,7 +40,7 @@ export default function Page() {
   return (
     <main className="min-h-screen flex justify-center">
       <Tabs defaultValue="main" className="w-96">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-2 mt-2">
           <TabsTrigger value="main">Home</TabsTrigger>
           <TabsTrigger value="map">Map</TabsTrigger>
         </TabsList>
@@ -41,7 +52,7 @@ export default function Page() {
 
             <div className="flex gap-2 justify-center">
               <Button onClick={connect} disabled={connected}>
-                {connected ? "Connected" : "Connect"}
+                {connected ? "Connected" : "Connect Mic"}
               </Button>
             </div>
             <div className="grid w-full max-w-sm items-center gap-3">
@@ -72,9 +83,58 @@ export default function Page() {
           </div>
         </TabsContent>
         <TabsContent value="map">
-          <Map />
+          <Map currentMachine="Guillotine" />
         </TabsContent>
       </Tabs>
+
+      <Drawer>
+        <DrawerTrigger className="absolute text-center bottom-4" asChild>
+          <Button variant="outline" className="w-40">
+            <Menu />
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Edit Your Current Machine</DrawerTitle>
+            <DrawerDescription>
+              Change your machine that you will be requesting material to
+            </DrawerDescription>
+          </DrawerHeader>
+          <ul className="grid grid-cols-2 gap-2 p-5 place-items-center">
+            <li>
+              <Button variant="outline">Rotary</Button>
+            </li>
+            <li>
+              <Button variant="outline">Slitter</Button>
+            </li>
+            <li>
+              <Button variant="outline">AOPACK</Button>
+            </li>
+            <li>
+              <Button variant="outline">Hand Fed Die Cut</Button>
+            </li>
+            <li>
+              <Button variant="outline">Guillotine</Button>
+            </li>
+            <li>
+              <Button variant="outline">Langston</Button>
+            </li>
+            <li>
+              <Button variant="outline">Assembly</Button>
+            </li>
+          </ul>
+          <div className="flex items-center justify-center gap-3 flex-col">
+            <Label htmlFor="name">Enter Name</Label>
+            <Input id="name" placeholder="John Doe" className="w-2/3" />
+          </div>
+          <DrawerFooter>
+            <Button>Submit</Button>
+            <DrawerClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </main>
   );
 }
