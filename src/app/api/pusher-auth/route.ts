@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     const presenceData = {
       user_id: crypto.randomUUID(),
       user_info: {
-        name: "Anonymous User", // Replace with logged-in user data if available
+        name: params.get("name") || "Guest",
       },
     };
 

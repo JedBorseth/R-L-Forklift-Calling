@@ -32,9 +32,9 @@ export default function useWalkie() {
     };
   }, []);
 
-  async function connect() {
+  async function connect({ username = "Guest" }: { username?: string } = {}) {
     if (connected) return;
-
+    console.log("username", username);
     const localStream = await navigator.mediaDevices.getUserMedia({
       audio: true,
     });
@@ -79,7 +79,7 @@ export default function useWalkie() {
       const memberList = Object.entries(membersObj).map(
         ([user_id, user_info]: [string, any]) => ({
           id: user_id,
-          name: user_info.name || "Guest",
+          name: username || "Guest",
           isLocal: user_id === clientId.current,
         })
       );
@@ -93,7 +93,7 @@ export default function useWalkie() {
         type: "join",
         payload: {
           id: clientId.current,
-          name: "Guest" /* or real user name */,
+          name: username,
         },
       });
     });

@@ -7,6 +7,8 @@ import Map from "~/components/Map";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { toast } from "sonner";
+
 import {
   Drawer,
   DrawerClose,
@@ -17,11 +19,15 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "~/components/ui/drawer";
-import { Menu } from "lucide-react";
+import { BoxIcon, Check, Menu, Send } from "lucide-react";
+import { twMerge } from "tailwind-merge";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "~/components/ui/badge";
 
 export default function Page() {
   const [machine, setMachine] = useState<string>("");
-
+  const [username, setUsername] = useState<string>("");
   const {
     connected,
     connect,
@@ -40,6 +46,10 @@ export default function Page() {
   };
   useEffect(() => {
     const value = getFromLocalStorage("machine");
+    const username = getFromLocalStorage("name");
+    if (username !== null) {
+      setUsername(username);
+    }
     if (value !== null) {
       setMachine(value);
     }
@@ -49,26 +59,155 @@ export default function Page() {
     saveToLocalStorage(key, value);
     setMachine(value);
   };
+  const [items, setItems] = useState(
+    [] as {
+      dateAdded: string;
+      id: number;
+      machine: string;
+      request: string;
+      username: string;
+    }[]
+  );
+  useEffect(() => {
+    const loadData = async () => {
+      const res = await fetch("/api/requests"); // make sure this matches your route
+      const data = await res.json();
+      setItems(data);
+    };
+
+    loadData();
+  }, []);
+  console.log("items", items);
+
+  const deleteItem = async (id: number) => {
+    try {
+      const res = await fetch("/api/requests", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: id }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete request");
+      }
+
+      // Remove from local state without re-fetch
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    } catch (err) {
+      console.error("Error deleting request:", err);
+      alert("Failed to delete request");
+    }
+  };
 
   return (
     <main className="min-h-screen flex justify-center">
       <Tabs defaultValue="main" className="w-96">
-        <TabsList className="grid w-full grid-cols-2 mt-2">
+        <TabsList
+          className={twMerge(
+            `grid w-full mt-2 ${
+              machine === "forklift" ? "grid-cols-3" : "grid-cols-2"
+            }`
+          )}
+        >
           <TabsTrigger value="main">Home</TabsTrigger>
-          <TabsTrigger value="map">Map</TabsTrigger>
+          <TabsTrigger value="online">Currently Online</TabsTrigger>
+          {machine === "forklift" ? (
+            <TabsTrigger value="requests" className="relative">
+              Material Requests{" "}
+              {items.length > 0 && (
+                <Badge
+                  className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums absolute -top-2 -right-4"
+                  variant="default"
+                >
+                  {items.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          ) : null}
         </TabsList>
         <TabsContent value="main">
-          <div className="w-full max-w-md space-y-6">
+          <div className="w-full max-w-md space-y-6 flex flex-col">
             <h1 className="text-2xl font-bold w-full text-center">
               Push to Talk Demo
             </h1>
 
-            <div className="grid w-full max-w-sm items-center gap-3">
-              <Label htmlFor="request">Request Material</Label>
-              <Input type="request" id="request" placeholder="10x20 32C etc." />
-            </div>
+            {machine === "forklift" ? null : (
+              <form
+                className="grid w-full max-w-sm items-center gap-3"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget;
+                  const requestInput = form.elements.namedItem(
+                    "request"
+                  ) as HTMLInputElement;
+                  if (requestInput.value.trim() === "") {
+                    alert("Please enter a valid request.");
+                    return;
+                  }
+                  const newItem = {
+                    dateAdded: null,
+                    id: null,
+                    machine: machine,
+                    request: requestInput.value,
+                    username: username || "Guest",
+                  };
+                  try {
+                    const res = await fetch("/api/requests", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(newItem),
+                    });
+
+                    if (!res.ok) {
+                      throw new Error("Failed to add request");
+                    }
+
+                    // Optional: re-fetch updated list
+                    const updatedItems = await fetch("/api/requests").then(
+                      (r) => r.json()
+                    );
+                    setItems(updatedItems);
+
+                    console.log("Request added successfully");
+                    toast("Request Sent!", {
+                      description:
+                        "A forklift has been notified and is on its way shortly.",
+                      richColors: true,
+                    });
+
+                    form.reset();
+                  } catch (err) {
+                    console.error("Error adding request:", err);
+                    alert("Something went wrong. Please try again.");
+                  }
+                }}
+              >
+                <Label htmlFor="request">Request Material</Label>
+                <div className="flex">
+                  <Input
+                    type="request"
+                    id="request"
+                    placeholder="10x20 32C etc."
+                  />
+                  <Button type="submit" variant="outline">
+                    <Send />
+                  </Button>
+                </div>
+              </form>
+            )}
             <div className="flex gap-2 justify-center">
-              <Button onClick={connect} disabled={connected}>
+              <Button
+                onClick={() => {
+                  connect({
+                    username: getFromLocalStorage("name") || "Guest",
+                  });
+                }}
+                disabled={connected}
+              >
                 {connected ? "Connected" : "Connect Mic"}
               </Button>
             </div>
@@ -84,6 +223,8 @@ export default function Page() {
               {localMuted ? "Mic Active" : "Mic is muted"}
             </div>
           </div>
+        </TabsContent>
+        <TabsContent value="online">
           <div className="mt-10">
             <p className="text-sm">Participants:</p>
             <ul className="mt-2">
@@ -95,8 +236,54 @@ export default function Page() {
             </ul>
           </div>
         </TabsContent>
-        <TabsContent value="map">
-          <Map currentMachine={machine} />
+        <TabsContent value="requests">
+          <div className="flex flex-col items-center justify-center gap-4 mt-6">
+            <AnimatePresence>
+              {items.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }} // Prevent vertical drag
+                  onDragEnd={(_, info) => {
+                    if (info.offset.x < -100) {
+                      // Swipe left past 100px → remove
+
+                      deleteItem(item.id);
+                    } else {
+                      // Snap back if not far enough
+                    }
+                  }}
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -150 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  className="cursor-pointer select-none"
+                >
+                  <Alert className="relative pb-12 min-w-[80vw] min-h-24">
+                    <BoxIcon />
+                    <AlertTitle>
+                      Material Request from{" "}
+                      {item.machine.charAt(0).toUpperCase() +
+                        item.machine.slice(1)}
+                    </AlertTitle>
+                    <AlertDescription className="">
+                      {item.request}
+                    </AlertDescription>
+                    <Button
+                      className="absolute bottom-1 right-1 hover:bg-green-100"
+                      variant="outline"
+                      onClick={() => {
+                        deleteItem(item.id);
+                      }}
+                    >
+                      <Check />
+                    </Button>
+                  </Alert>
+                </motion.div>
+              ))}
+              {items.length === 0 && <h1>No Machine Material Requests</h1>}
+            </AnimatePresence>
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -194,11 +381,38 @@ export default function Page() {
                 Gluing
               </Button>
             </li>
+            <li>
+              <Button
+                variant={machine === "forklift" ? "default" : "outline"}
+                onClick={() => {
+                  handleSave("machine", "forklift");
+                }}
+              >
+                Forklift Operator
+              </Button>
+            </li>
           </ul>
-          <div className="flex items-center justify-center gap-3 flex-col">
-            <Label htmlFor="name">Enter Name</Label>
-            <Input id="name" placeholder="John Doe" className="w-2/3" />
-          </div>
+          <form
+            onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+              e.preventDefault();
+              const form = e.currentTarget;
+              const nameInput = form.elements.namedItem(
+                "name"
+              ) as HTMLInputElement;
+              handleSave("name", nameInput.value);
+              window.location.reload();
+            }}
+          >
+            <div className="flex items-center justify-center gap-3 flex-col">
+              <Label htmlFor="name">Enter Name</Label>
+              <Input
+                id="name"
+                placeholder="John Doe"
+                className="w-2/3"
+                defaultValue={username}
+              />
+            </div>
+          </form>
           <DrawerFooter>
             <Button>Submit</Button>
             <DrawerClose asChild>
