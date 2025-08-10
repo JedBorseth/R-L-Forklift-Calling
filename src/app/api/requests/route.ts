@@ -9,9 +9,14 @@ export async function GET() {
 
     // Convert to array of objects
     const data = result.rows.map((row) => {
-      const obj: Record<string, any> = {};
+      const obj: Record<string, string> = {};
       result.columns.forEach((col, i) => {
-        obj[col] = row[i];
+        const value = row[i];
+        if (value instanceof ArrayBuffer) {
+          obj[col] = Buffer.from(value).toString("base64");
+        } else {
+          obj[col] = value as string;
+        }
       });
       return obj;
     });

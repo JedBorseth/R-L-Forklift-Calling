@@ -93,8 +93,9 @@ export default function Page() {
         throw new Error("Failed to delete request");
       }
 
-      // Remove from local state without re-fetch
       setItems((prev) => prev.filter((i) => i.id !== id));
+      const audio = new Audio("/ding.mp3");
+      audio.play().catch((err) => console.error("Audio playback failed:", err));
     } catch (err) {
       console.error("Error deleting request:", err);
       alert("Failed to delete request");
