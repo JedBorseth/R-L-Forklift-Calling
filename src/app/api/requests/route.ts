@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { turso } from "~/lib/db";
+import { pusher } from "~/lib/pusher";
 
 export async function GET() {
   try {
@@ -45,13 +46,24 @@ export async function POST(req: Request) {
       );
     }
 
-    await turso.execute({
+    const insertResult = await turso.execute({
       sql: `
         INSERT INTO requests (username, request, machine)
         VALUES (?, ?, ?)
       `,
       args: [username, request, machine],
     });
+
+    const newRow = {
+      id: Number(insertResult.lastInsertRowid),
+      username,
+      request,
+      machine,
+      dateAdded: new Date().toISOString(),
+    };
+
+    // Trigger realtime event
+    await pusher.trigger("requests", "new-request", newRow);
 
     return NextResponse.json({ success: true });
   } catch (error) {

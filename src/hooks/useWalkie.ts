@@ -34,7 +34,6 @@ export default function useWalkie() {
 
   async function connect({ username = "Guest" }: { username?: string } = {}) {
     if (connected) return;
-    console.log("username", username);
     const localStream = await navigator.mediaDevices.getUserMedia({
       audio: true,
     });
@@ -106,14 +105,12 @@ export default function useWalkie() {
     });
 
     channel.bind("pusher:member_removed", (member: PusherMemberType) => {
-      console.log("Member removed:", member);
       setParticipants((prev) => prev.filter((p) => p.id !== member.id));
     });
 
     channel.bind(
       "signal",
       async (data: { from: string; to: string; type: string }) => {
-        console.log("Received signal:", data);
         if (!data || (data.to !== clientId.current && data.to !== "*")) return;
         const { from, type, payload } = data as {
           from: string;
