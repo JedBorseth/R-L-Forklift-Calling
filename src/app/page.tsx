@@ -120,7 +120,7 @@ export default function Page() {
   console.log(participants, "participants");
   return (
     <>
-      {!connected ? (
+      {connected ? (
         <div className="min-h-screen flex flex-col justify-center items-center gap-4">
           <Button
             onClick={() => {
@@ -434,7 +434,7 @@ export default function Page() {
                       id="name"
                       placeholder="John Doe"
                       autoComplete="given-name"
-                      className="w-2/3 focus:mb-20 md:focus:mb-0"
+                      className="w-2/3 focus:-translate-y-30 md:focus:-translate-y-0"
                       defaultValue={username}
                     />
                   </div>
