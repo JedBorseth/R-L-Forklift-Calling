@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const eventName = body.event || "signal";
     const payload = body.payload || {};
 
-    await pusher.trigger("presence-walkie", "signal", payload);
+    await pusher.trigger("presence-walkie", eventName, body.payload ?? {});
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error(err);

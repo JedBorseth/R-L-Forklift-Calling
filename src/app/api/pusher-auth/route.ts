@@ -1,3 +1,5 @@
+// src/app/api/pusher-auth/route.ts
+
 import { pusher } from "~/lib/pusher";
 
 export async function POST(req: Request) {

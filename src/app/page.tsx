@@ -116,7 +116,7 @@ export default function Page() {
       pusher.disconnect();
     };
   }, [setItems]);
-
+  console.log(participants, "participants");
   return (
     <>
       {!connected ? (
