@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { turso } from "~/lib/db";
 import { pusher } from "~/lib/pusher";
 
+// This is a very simple API and should probably be changed if this app were to be used in production.
+// It does not handle authentication, rate limiting, or any other security measures.
+
 export async function GET() {
   try {
     const result = await turso.execute(

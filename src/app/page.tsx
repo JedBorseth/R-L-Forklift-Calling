@@ -93,6 +93,7 @@ export default function Page() {
 
       setItems((prev) => prev.filter((i) => i.id !== id));
       const audio = new Audio("/ding.mp3");
+      audio.volume = 0.5; // Adjust volume as needed
       audio.play().catch((err) => console.error("Audio playback failed:", err));
     } catch (err) {
       console.error("Error deleting request:", err);
@@ -180,7 +181,7 @@ export default function Page() {
                       const newItem = {
                         dateAdded: null,
                         id: null,
-                        machine: machine,
+                        machine: machine || "unknown",
                         request: requestInput.value,
                         username: username || "Guest",
                       };
@@ -211,7 +212,7 @@ export default function Page() {
 
                         form.reset();
                       } catch (err) {
-                        console.error("Error adding request:", err);
+                        console.error(err);
                         alert("Something went wrong. Please try again.");
                       }
                     }}
@@ -316,7 +317,7 @@ export default function Page() {
                 <Menu />
               </Button>
             </DrawerTrigger>
-            <DrawerContent>
+            <DrawerContent className="">
               <DrawerHeader>
                 <DrawerTitle>Edit Your Current Machine</DrawerTitle>
                 <DrawerDescription>
@@ -432,7 +433,8 @@ export default function Page() {
                     <Input
                       id="name"
                       placeholder="John Doe"
-                      className="w-2/3"
+                      autoComplete="given-name"
+                      className="w-2/3 focus:mb-20 md:focus:mb-0"
                       defaultValue={username}
                     />
                   </div>
