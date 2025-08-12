@@ -120,7 +120,7 @@ export default function Page() {
   console.log(participants, "participants");
   return (
     <>
-      {connected ? (
+      {!connected ? (
         <div className="min-h-screen flex flex-col justify-center items-center gap-4">
           <Button
             onClick={() => {
@@ -138,13 +138,13 @@ export default function Page() {
           <Tabs defaultValue="main" className="w-96">
             <TabsList
               className={twMerge(
-                `grid w-full mt-2 ${
+                `grid w-3/4 mt-2 self-center ${
                   machine === "forklift" ? "grid-cols-3" : "grid-cols-2"
                 }`
               )}
             >
               <TabsTrigger value="main">Home</TabsTrigger>
-              <TabsTrigger value="online">Currently Online</TabsTrigger>
+              <TabsTrigger value="online">Users</TabsTrigger>
               {machine === "forklift" ? (
                 <TabsTrigger value="requests" className="relative">
                   Material Requests{" "}
@@ -434,7 +434,7 @@ export default function Page() {
                       id="name"
                       placeholder="John Doe"
                       autoComplete="given-name"
-                      className="w-2/3 focus:-translate-y-30 md:focus:-translate-y-0"
+                      className="w-2/3 focus:-translate-y-10 md:focus:-translate-y-0 bg-white"
                       defaultValue={username}
                     />
                   </div>
