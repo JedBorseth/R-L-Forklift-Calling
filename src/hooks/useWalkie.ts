@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Pusher from "pusher-js";
+import { toast } from "sonner";
 
 const PUSHER_KEY = process.env.NEXT_PUBLIC_PUSHER_KEY!;
 const PUSHER_CLUSTER = process.env.NEXT_PUBLIC_PUSHER_CLUSTER!;
@@ -18,8 +19,6 @@ type Participant = {
 
 type PeerMap = Record<string, RTCPeerConnection>;
 type CandidateQueue = Record<string, RTCIceCandidateInit[]>;
-
-Pusher.logToConsole = true;
 
 export default function useWalkie() {
   const [connected, setConnected] = useState(false);
@@ -60,11 +59,17 @@ export default function useWalkie() {
     if (connected) return;
 
     // get mic (start muted)
-    const localStream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-    });
-    localStream.getAudioTracks().forEach((t) => (t.enabled = false));
-    localStreamRef.current = localStream;
+    try {
+      const localStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      localStream.getAudioTracks().forEach((t) => (t.enabled = false));
+      localStreamRef.current = localStream;
+    } catch (e) {
+      console.warn("No microphone found :(", e);
+      toast.error("No microphone found.");
+      return;
+    }
     setLocalMuted(true);
 
     const pusher = new Pusher(PUSHER_KEY, {

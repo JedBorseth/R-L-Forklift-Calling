@@ -24,8 +24,6 @@ export async function GET() {
       });
       return obj;
     });
-
-    console.log("Fetched requests:", data);
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching requests:", error);

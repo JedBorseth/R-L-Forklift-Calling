@@ -24,6 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "~/components/ui/badge";
 import Pusher from "pusher-js";
+import Trello from "~/components/Trello";
 
 export default function Page() {
   const [machine, setMachine] = useState<string>("");
@@ -109,6 +110,12 @@ export default function Page() {
 
     channel.bind("new-request", (data: ItemType) => {
       setItems((prev) => [data, ...prev]); // prepend new item
+      if (getFromLocalStorage("machine") === "forklift") {
+        const audio = new Audio("/ding2.mp3");
+        audio
+          .play()
+          .catch((err) => console.error("Audio playback failed:", err));
+      }
     });
 
     return () => {
@@ -117,7 +124,6 @@ export default function Page() {
       pusher.disconnect();
     };
   }, [setItems]);
-  console.log(participants, "participants");
   return (
     <>
       {!connected ? (
@@ -138,16 +144,18 @@ export default function Page() {
           <Tabs defaultValue="main" className="w-96">
             <TabsList
               className={twMerge(
-                `grid w-3/4 mt-2 self-center ${
-                  machine === "forklift" ? "grid-cols-3" : "grid-cols-2"
+                `grid w-full mt-2 self-center ${
+                  machine === "forklift" ? "grid-cols-4" : "grid-cols-3"
                 }`
               )}
             >
               <TabsTrigger value="main">Home</TabsTrigger>
+              <TabsTrigger value="board">Clipboard</TabsTrigger>
+
               <TabsTrigger value="online">Users</TabsTrigger>
               {machine === "forklift" ? (
                 <TabsTrigger value="requests" className="relative">
-                  Material Requests{" "}
+                  Requests
                   {items.length > 0 && (
                     <Badge
                       className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums absolute -top-2 -right-4"
@@ -161,9 +169,14 @@ export default function Page() {
             </TabsList>
             <TabsContent value="main">
               <div className="w-full max-w-md space-y-6 flex flex-col justify-around h-full">
-                <h1 className="text-2xl font-bold w-full text-center">
-                  R&L Radio & Forklift Pager
-                </h1>
+                <div className="flex flex-col items-center">
+                  <h1 className="text-2xl font-bold w-64">
+                    R&L Radio Push to Talk
+                  </h1>
+                  <h2 className="text-sm font-bold text-right w-64">
+                    Jed Borseth
+                  </h2>
+                </div>
 
                 {machine === "forklift" ? null : (
                   <form
@@ -238,9 +251,12 @@ export default function Page() {
                     disabled={!connected}
                   />
                 </div>
+                <div className="w-full h-24"></div>
 
-                <div className="text-xs text-muted-foreground justify-end flex">
-                  {localMuted ? "Mic Active" : "Mic is muted"}
+                <div className="text-xs text-muted-foreground justify-end flex opacity-70 absolute bottom-2 right-2">
+                  {localMuted ? "Mic Active" : "Mic is muted"} <br />
+                  Machine: {machine || "Not Set"} <br />
+                  User: {username || "Guest"}
                 </div>
               </div>
             </TabsContent>
@@ -255,6 +271,9 @@ export default function Page() {
                   ))}
                 </ul>
               </div>
+            </TabsContent>
+            <TabsContent value="board">
+              <Trello />
             </TabsContent>
             <TabsContent value="requests">
               <div className="flex flex-col items-center justify-center gap-4 mt-6">
@@ -286,7 +305,7 @@ export default function Page() {
                       <Alert className="relative pb-12 min-w-[80vw] min-h-24">
                         <BoxIcon />
                         <AlertTitle>
-                          Material Request from{" "}
+                          {item.username}: Material Request from{" "}
                           {item.machine.charAt(0).toUpperCase() +
                             item.machine.slice(1)}
                         </AlertTitle>
