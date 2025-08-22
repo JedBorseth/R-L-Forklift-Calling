@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 
-export async function GET(
-  req: Request,
-  { params }: { params: { listId: string } }
-) {
-  const { listId } = params;
+export async function GET({ params }: { params: Promise<{ listId: string }> }) {
+  const { listId } = await params;
 
   if (!listId) {
     return NextResponse.json({ error: "Missing listId" }, { status: 400 });
