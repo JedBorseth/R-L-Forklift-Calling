@@ -25,10 +25,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "~/components/ui/badge";
 import Pusher from "pusher-js";
 import Trello from "~/components/Trello";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "~/components/ui/input-otp";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
 
 export default function Page() {
   const [machine, setMachine] = useState<string>("");
   const [username, setUsername] = useState<string>("");
+  const [pin, setPin] = useState<string>("");
+  const PASS = 5555;
   const {
     connected,
     connect,
@@ -273,7 +281,26 @@ export default function Page() {
               </div>
             </TabsContent>
             <TabsContent value="board">
-              <Trello />
+              {Number(pin) === PASS ? (
+                <Trello />
+              ) : (
+                // This is done on the client side only, so it's not secure at all. also the pin is stored in plain text and available to view on github
+                <div className="flex flex-col items-center justify-center gap-4 mt-6">
+                  <h1>Enter PIN to access data</h1>
+                  <InputOTP
+                    maxLength={4}
+                    pattern={REGEXP_ONLY_DIGITS}
+                    onChange={(value) => setPin(value)}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+              )}
             </TabsContent>
             <TabsContent value="requests">
               <div className="flex flex-col items-center justify-center gap-4 mt-6">
