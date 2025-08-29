@@ -1,14 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET({ params }: { params: Promise<{ listId: string }> }) {
-  const { listId } = await params;
+export async function GET(
+  request: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{
+      listId: string;
+    }>;
+  }
+) {
+  const slug = await params;
+  console.log("Fetching cards for listId:", slug.listId || "undefined");
 
-  if (!listId) {
+  if (!slug.listId) {
     return NextResponse.json({ error: "Missing listId" }, { status: 400 });
   }
 
   try {
-    const url = `https://api.trello.com/1/lists/${listId}/cards?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`;
+    const url = `https://api.trello.com/1/lists/${slug.listId}/cards?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`;
 
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) {
